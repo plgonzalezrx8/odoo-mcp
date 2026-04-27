@@ -1,0 +1,57 @@
+[project]
+name = "odoo-mcp"
+version = "0.1.0"
+description = "Docker-first FastMCP server for Odoo 19 JSON-2."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Pedro Gonzalez" }]
+keywords = ["mcp", "fastmcp", "odoo", "crm"]
+dependencies = [
+    "fastmcp==3.2.4",
+    "httpx>=0.28.1,<0.29",
+    "pydantic>=2.11.0,<3",
+    "pydantic-settings>=2.8.0,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/plgonzalezrx8/odoo-mcp"
+Repository = "https://github.com/plgonzalezrx8/odoo-mcp"
+
+[project.scripts]
+odoo-mcp = "odoo_mcp.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "respx>=0.22.0",
+    "ruff>=0.11.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+files = ["src"]
