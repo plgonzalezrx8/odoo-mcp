@@ -1,0 +1,19 @@
+services:
+  odoo-mcp:
+    build:
+      context: .
+    image: odoo-mcp:local
+    env_file:
+      - .env
+    environment:
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: 8000
+      MCP_HTTP_PATH: /mcp
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "uv", "run", "--no-sync", "odoo-mcp", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
