@@ -13,6 +13,11 @@ COPY src ./src
 
 RUN uv sync --frozen --no-dev
 
+RUN useradd --create-home --shell /usr/sbin/nologin odoo-mcp \
+    && chown -R odoo-mcp:odoo-mcp /app
+
+USER odoo-mcp
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

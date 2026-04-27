@@ -185,7 +185,7 @@ async def test_confirmed_create_and_update_use_json2_single_calls(
                     "type": "opportunity",
                     "partner_id": 11,
                     "planned_revenue": 9000.0,
-                }
+                },
             },
         ),
         (
@@ -206,9 +206,7 @@ async def test_won_lost_conversion_merge_and_activity_use_model_methods(
     await mcp.tools["crm_mark_lost"](lead_id=7, lost_reason_id=2, confirm=True)
     await mcp.tools["crm_restore_lead"](lead_id=7, confirm=True)
     await mcp.tools["crm_convert_lead_to_opportunity"](lead_id=7, partner_id=9, confirm=True)
-    await mcp.tools["crm_merge_opportunities"](
-        lead_ids=[7, 8], user_id=4, team_id=3, confirm=True
-    )
+    await mcp.tools["crm_merge_opportunities"](lead_ids=[7, 8], user_id=4, team_id=3, confirm=True)
     await mcp.tools["crm_schedule_activity"](
         lead_id=7,
         activity_type_id=1,
@@ -250,7 +248,7 @@ async def test_won_lost_conversion_merge_and_activity_use_model_methods(
                     "summary": "Follow up",
                     "date_deadline": "2026-05-01",
                     "user_id": 4,
-                }
+                },
             },
         ),
         (

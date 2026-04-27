@@ -55,16 +55,16 @@ class FakeClient:
         self.calls.append(("read", (model, ids, fields), {"context": context}))
         return [{"id": ids[0], "name": "Acme"}]
 
-    async def create(self, model, values, context=None):
-        self.calls.append(("create", (model, values), {"context": context}))
+    async def create(self, model, values, context=None, *, confirm=False):
+        self.calls.append(("create", (model, values), {"context": context, "confirm": confirm}))
         return 42
 
-    async def write(self, model, ids, values, context=None):
-        self.calls.append(("write", (model, ids, values), {"context": context}))
+    async def write(self, model, ids, values, context=None, *, confirm=False):
+        self.calls.append(("write", (model, ids, values), {"context": context, "confirm": confirm}))
         return True
 
-    async def unlink(self, model, ids, context=None):
-        self.calls.append(("unlink", (model, ids), {"context": context}))
+    async def unlink(self, model, ids, context=None, *, confirm=False):
+        self.calls.append(("unlink", (model, ids), {"context": context, "confirm": confirm}))
         return True
 
     async def action(self, action, *, model=None, record_ids=None, context=None):
@@ -73,9 +73,13 @@ class FakeClient:
         )
         return {"type": "ir.actions.act_window", "name": action}
 
-    async def call_method(self, model, method, args=None, kwargs=None, context=None):
+    async def call_method(self, model, method, args=None, kwargs=None, context=None, confirm=False):
         self.calls.append(
-            ("call_method", (model, method), {"args": args, "kwargs": kwargs, "context": context})
+            (
+                "call_method",
+                (model, method),
+                {"args": args, "kwargs": kwargs, "context": context, "confirm": confirm},
+            )
         )
         return {"ok": True}
 
@@ -145,9 +149,11 @@ async def test_write_create_unlink_and_method_tools_delegate_with_safety() -> No
     safety = FakeSafety()
     register_generic_tools(mcp, client=client, safety=safety)
 
-    assert await mcp.tools["odoo_create"]("res.partner", {"name": "Acme"}) == 42
-    assert await mcp.tools["odoo_write"]("res.partner", [42], {"phone": "555"}) is True
-    assert await mcp.tools["odoo_unlink"]("res.partner", [42]) is True
+    assert await mcp.tools["odoo_create"]("res.partner", {"name": "Acme"}, confirm=True) == 42
+    assert (
+        await mcp.tools["odoo_write"]("res.partner", [42], {"phone": "555"}, confirm=True) is True
+    )
+    assert await mcp.tools["odoo_unlink"]("res.partner", [42], confirm=True) is True
     assert await mcp.tools["odoo_call_method"]("res.partner", "name_get", args=[[42]]) == {
         "ok": True
     }

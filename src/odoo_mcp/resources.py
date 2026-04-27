@@ -182,9 +182,7 @@ def _summarize_pipeline(rows: list[JsonObject], stage_names: dict[int, str]) -> 
 def _stage_identity(value: object, stage_names: dict[int, str]) -> tuple[int | None, str]:
     if isinstance(value, list | tuple) and value:
         stage_id = int(value[0])
-        stage_name = (
-            str(value[1]) if len(value) > 1 and value[1] else stage_names.get(stage_id)
-        )
+        stage_name = str(value[1]) if len(value) > 1 and value[1] else stage_names.get(stage_id)
         return stage_id, stage_name or f"Stage {stage_id}"
     if isinstance(value, int) and not isinstance(value, bool):
         return value, stage_names.get(value, f"Stage {value}")

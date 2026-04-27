@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, TypeAlias
+from typing import Any
 
-JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
-JsonObject: TypeAlias = dict[str, JsonValue]
-OdooDomain: TypeAlias = list[Any]
+type JsonValue = str | int | float | bool | None | list[JsonValue] | dict[str, JsonValue]
+type JsonObject = dict[str, JsonValue]
+type OdooDomain = list[Any]

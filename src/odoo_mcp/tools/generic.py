@@ -37,7 +37,12 @@ class GenericOdooClient(Protocol):
     ) -> list[JsonObject]: ...
 
     async def create(
-        self, model: str, values: JsonObject, context: JsonObject | None = None
+        self,
+        model: str,
+        values: JsonObject,
+        context: JsonObject | None = None,
+        *,
+        confirm: bool = False,
     ) -> int: ...
 
     async def write(
@@ -46,10 +51,17 @@ class GenericOdooClient(Protocol):
         ids: list[int],
         values: JsonObject,
         context: JsonObject | None = None,
+        *,
+        confirm: bool = False,
     ) -> bool: ...
 
     async def unlink(
-        self, model: str, ids: list[int], context: JsonObject | None = None
+        self,
+        model: str,
+        ids: list[int],
+        context: JsonObject | None = None,
+        *,
+        confirm: bool = False,
     ) -> bool: ...
 
     async def current_user(self, context: JsonObject | None = None) -> JsonObject: ...
@@ -123,15 +135,24 @@ def register_generic_tools(
 
     @mcp.tool(name="odoo_create", description="Create an Odoo record after safety checks.")
     async def odoo_create(
-        model: str, values: JsonObject, context: JsonObject | None = None
+        model: str,
+        values: JsonObject,
+        context: JsonObject | None = None,
+        confirm: bool = False,
     ) -> int | JsonValue:
         active_client = _resolve_client(client, settings)
         active_safety = _resolve_safety(safety, settings)
         safe_model = _require_model(model)
         safe_values = _normalize_values(values)
+        if not confirm:
+            from odoo_mcp.safety import assert_write_allowed
+
+            assert_write_allowed(confirm=confirm, operation="create")
         _ensure_model_allowed(active_safety, safe_model)
         _ensure_write_allowed(active_safety, safe_model, safe_values)
-        return await _maybe_await(active_client.create(safe_model, safe_values, context))
+        return await _maybe_await(
+            active_client.create(safe_model, safe_values, context, confirm=confirm)
+        )
 
     @mcp.tool(name="odoo_write", description="Update Odoo records after safety checks.")
     async def odoo_write(
@@ -139,29 +160,45 @@ def register_generic_tools(
         ids: int | list[int],
         values: JsonObject,
         context: JsonObject | None = None,
+        confirm: bool = False,
     ) -> bool:
         active_client = _resolve_client(client, settings)
         active_safety = _resolve_safety(safety, settings)
         safe_model = _require_model(model)
         safe_ids = _normalize_ids(ids)
         safe_values = _normalize_values(values)
+        if not confirm:
+            from odoo_mcp.safety import assert_write_allowed
+
+            assert_write_allowed(confirm=confirm, operation="write")
         _ensure_model_allowed(active_safety, safe_model)
         _ensure_write_allowed(active_safety, safe_model, safe_values)
         return bool(
-            await _maybe_await(active_client.write(safe_model, safe_ids, safe_values, context))
+            await _maybe_await(
+                active_client.write(safe_model, safe_ids, safe_values, context, confirm=confirm)
+            )
         )
 
     @mcp.tool(name="odoo_unlink", description="Delete Odoo records after safety checks.")
     async def odoo_unlink(
-        model: str, ids: int | list[int], context: JsonObject | None = None
+        model: str,
+        ids: int | list[int],
+        context: JsonObject | None = None,
+        confirm: bool = False,
     ) -> bool:
         active_client = _resolve_client(client, settings)
         active_safety = _resolve_safety(safety, settings)
         safe_model = _require_model(model)
         safe_ids = _normalize_ids(ids)
+        if not confirm:
+            from odoo_mcp.safety import assert_write_allowed
+
+            assert_write_allowed(confirm=confirm, operation="unlink")
         _ensure_model_allowed(active_safety, safe_model)
         _ensure_unlink_allowed(active_safety, safe_model, safe_ids)
-        return bool(await _maybe_await(active_client.unlink(safe_model, safe_ids, context)))
+        return bool(
+            await _maybe_await(active_client.unlink(safe_model, safe_ids, context, confirm=confirm))
+        )
 
     @mcp.tool(name="odoo_action", description="Execute a named Odoo action.")
     async def odoo_action(
@@ -198,6 +235,7 @@ def register_generic_tools(
         args: list[JsonValue] | None = None,
         kwargs: JsonObject | None = None,
         context: JsonObject | None = None,
+        confirm: bool = False,
     ) -> JsonValue:
         active_client = _resolve_client(client, settings)
         active_safety = _resolve_safety(safety, settings)
@@ -212,6 +250,7 @@ def register_generic_tools(
             args=args or [],
             kwargs=kwargs or {},
             context=context,
+            confirm=confirm,
         )
 
     @mcp.tool(name="odoo_current_user", description="Return the current Odoo user.")
@@ -269,13 +308,26 @@ async def _call_client_method(
     args: list[JsonValue] | None,
     kwargs: JsonObject | None,
     context: JsonObject | None,
+    confirm: bool = False,
 ) -> JsonValue:
     if hasattr(client, "call_method"):
         return await _maybe_await(
-            client.call_method(model, method, args=args or [], kwargs=kwargs or {}, context=context)
+            client.call_method(
+                model,
+                method,
+                args=args or [],
+                kwargs=kwargs or {},
+                context=context,
+                confirm=confirm,
+            )
         )
     if hasattr(client, "call"):
-        return await _maybe_await(client.call(model, method, args or [], kwargs or {}, context))
+        body = dict(kwargs or {})
+        if args:
+            body["args"] = args
+        return await _maybe_await(
+            client.call(model, method, context=context, confirm=confirm, **body)
+        )
     if hasattr(client, "execute_kw"):
         return await _maybe_await(
             client.execute_kw(model, method, args or [], kwargs or {}, context)
@@ -306,9 +358,7 @@ def _resolve_client[T](client: T | None, settings: object | None) -> T:
         if client_cls is not None:
             try:
                 return (
-                    cast(T, client_cls(settings))
-                    if settings is not None
-                    else cast(T, client_cls())
+                    cast(T, client_cls(settings)) if settings is not None else cast(T, client_cls())
                 )
             except TypeError:
                 return cast(T, client_cls())

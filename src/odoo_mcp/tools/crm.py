@@ -1,4 +1,5 @@
 """CRM FastMCP tool registrations for Odoo 19 JSON-2."""
+# mypy: disable-error-code="no-any-return"
 
 from __future__ import annotations
 

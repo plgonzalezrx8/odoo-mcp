@@ -38,3 +38,12 @@ jobs:
 
       - name: Validate package build
         run: uv build
+
+      - name: Build Docker image
+        run: |
+          cp .env.example .env
+          docker compose build
+
+      - name: Smoke test Docker healthcheck command
+        run: |
+          docker compose run --rm odoo-mcp uv run --no-sync odoo-mcp healthcheck

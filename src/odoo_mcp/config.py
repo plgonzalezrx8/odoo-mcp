@@ -79,7 +79,7 @@ def load_settings() -> OdooSettings:
     """Load settings from the process environment with a safe public error."""
 
     try:
-        return OdooSettings()
+        return OdooSettings()  # type: ignore[call-arg]
     except (SettingsError, ValidationError) as exc:
         raise OdooConfigError(f"Odoo configuration is invalid: {exc}") from exc
 
@@ -126,10 +126,10 @@ def _redact_value(
             for item in value
         ]
     if isinstance(value, str):
-        redacted = value
+        redacted_text = value
         for secret in secret_values:
-            redacted = redacted.replace(secret, REDACTED)
-        return redacted
+            redacted_text = redacted_text.replace(secret, REDACTED)
+        return redacted_text
     if isinstance(value, str | int | float | bool) or value is None:
         return value
     return str(value)
